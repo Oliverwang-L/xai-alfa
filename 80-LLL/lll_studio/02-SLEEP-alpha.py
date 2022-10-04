@@ -15,13 +15,15 @@ note.scalar_dict: {key: scalar_array}
 note.step_array: numpy array
 
 """
-summ_path = r'E:\wanglin\project\deep_learning\xai-alfa\80-LLL\sleep\01_SleepNet\0825_s80_alpha.sum'
-trial_id = 4
+summ_path = r'E:\wanglin\project\deep_learning\xai-alfa\80-LLL\sleep\01_SleepNet\0907_s80_alpha.sum'
+trial_id = 5
 
 notes = Note.load(summ_path)
 notes = [n for n in notes if n.configs['trial_id'] == trial_id]
 n_splits = len(notes[0].configs['data_config'].split(','))
 # n_splits = 4
+note = len(notes)
+split = n_splits
 assert len(notes) == n_splits
 k = notes[0].configs['patience'] * 2
 # ----------------------------------------------------------------------

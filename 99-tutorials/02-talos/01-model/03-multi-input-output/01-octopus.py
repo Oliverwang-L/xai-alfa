@@ -27,9 +27,9 @@ model.rehearse(export_graph=True)
 
 # Predict
 from tframe import DataSet
-data = DataSet(data_dict={'input-1': np.zeros([1, 32])})
-# data = DataSet(data_dict={'input-1': np.zeros([1, 32]),
-#                           'input-2': np.zeros([1, 16])})
+# data = DataSet(data_dict={'input-1': np.zeros([1, 32])})
+data = DataSet(data_dict={'input-1': np.zeros([1, 32]),
+                          'input-2': np.zeros([1, 16])})
 output = model.predict(data)
 
 

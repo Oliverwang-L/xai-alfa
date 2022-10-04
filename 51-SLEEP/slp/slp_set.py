@@ -43,8 +43,8 @@ class SleepSet(SequenceSet):
   # region: Data IO
 
   @classmethod
-  def read_edf_file(cls, fn: str, channel_list: List[str] = None,
-                    freq_modifier=None) -> List[DigitalSignal]:
+  def read_edf_data_pyedflib(cls, fn: str, channel_list: List[str] = None,
+                             freq_modifier=None) -> List[DigitalSignal]:
     """Read .edf file using pyedflib package.
 
     :param fn: file name
@@ -89,7 +89,7 @@ class SleepSet(SequenceSet):
     return digital_signals
 
   @classmethod
-  def read_edf_anno_file_using_mne(cls, fn: str, allow_rename=True)-> list:
+  def read_edf_anno_mne(cls, fn: str, allow_rename=True)-> list:
     from mne import read_annotations
 
     # Check extension
@@ -114,8 +114,8 @@ class SleepSet(SequenceSet):
     return stage_anno
 
   @classmethod
-  def read_edf_file_using_mne(cls, fn: str, channel_list: List[str],
-                              allow_rename=True) -> np.ndarray:
+  def read_edf_data_mne(cls, fn: str, channel_list: List[str],
+                        allow_rename=True) -> np.ndarray:
     """Read .edf file using `mne` package"""
     from mne.io import read_raw_edf
     from mne.io.edf.edf import RawEDF

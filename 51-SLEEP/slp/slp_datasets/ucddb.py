@@ -105,7 +105,7 @@ class UCDDB(SleepSet):
       console.print_progress(i, N)
 
       # (1) Read .rec file
-      digital_signals: List[DigitalSignal] = cls.read_edf_file(rec_fn)
+      digital_signals: List[DigitalSignal] = cls.read_edf_data_pyedflib(rec_fn)
 
       # (2) Read ECG data TODO:
       fn = os.path.join(data_dir, id + '_lifecard.edf')

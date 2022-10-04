@@ -50,14 +50,15 @@ def main(_):
   # ---------------------------------------------------------------------------
   # 3. trainer setup
   # ---------------------------------------------------------------------------
-  th.epoch = 1000
+  th.epoch = 10
   th.batch_size = 128
 
   th.optimizer = 'adam'
   th.learning_rate = 0.0003
 
   th.train = True
-  th.overwrite = True
+  th.save_records = False
+  th.overwrite = False
   th.print_cycle = 20
   # ---------------------------------------------------------------------------
   # 4. other stuff and activate

@@ -13,6 +13,7 @@ from slp.slp_set import SleepSet
 from typing import List
 
 from tframe import DataSet
+from tframe.data.sequences.seq_set import SequenceSet
 
 
 class SleepEDFx(SleepSet):
@@ -111,7 +112,8 @@ class SleepEDFx(SleepSet):
 
     # Get all .edf files
     hypnogram_file_list: List[str] = walk(data_dir, 'file', '*Hypnogram*')
-    if first_k is not None: hypnogram_file_list = hypnogram_file_list[:first_k]
+    if first_k is not None and first_k != '':
+      hypnogram_file_list = hypnogram_file_list[:int(first_k)]
     N = len(hypnogram_file_list)
     print('*' * 20)
     print("patient_num:", N)
@@ -143,14 +145,14 @@ class SleepEDFx(SleepSet):
       # (1) Read PSG file
       fn = os.path.join(data_dir, id[:7] + '0' + '-PSG.edf')
       assert os.path.exists(fn)
-      digital_signals: List[DigitalSignal] = cls.read_edf_file(
+      digital_signals: List[DigitalSignal] = cls.read_edf_data_pyedflib(
         fn, freq_modifier=lambda freq: freq / 30)
 
       # (2) Read stage labels
       labels = {'Sleep stage W':0, 'Sleep stage R':1, 'Sleep stage 1':2,
                 'Sleep stage 2':3, 'Sleep stage 3':4, 'Sleep stage 4':5,
                 'Movement time':6, 'Sleep stage ?':7}
-      stages_ann = cls.read_edf_anno_file_using_mne(hypnogram_file)
+      stages_ann = cls.read_edf_anno_mne(hypnogram_file)
       stages = [labels[stage] for stage in stages_ann]
       stages = np.array(stages)
 
@@ -179,9 +181,9 @@ class SleepEDFx(SleepSet):
     return sleep_groups
 
 
-  def configure(self, config_string: str):
+  def configure(self, config_string: str, rnn = False):
     """
-    config_string examples: '0,2,6'
+    output: [p1,p2,p3,...]
     """
     console.show_status(f'configure data...')
     def data_preprocess(data):
@@ -214,6 +216,11 @@ class SleepEDFx(SleepSet):
                                                                   + offset])
       data_aasm = np.array(data_aasm)
       annotation_onehot = np.array(annotation_onehot)
+      if rnn is True:
+        x = data_aasm.shape[0]
+        data_reshape = data_aasm.reshape(x // 3000, 3000)
+        annotation_reshape = annotation_onehot.reshape(len(annotation_onehot) // 5, 5)
+        return  data_reshape, annotation_reshape
       x, y = data_aasm.shape[0], data_aasm.shape[1]
       data_reshape = data_aasm.reshape(x // 3000, 3000, y)
       annotation_reshape = annotation_onehot.reshape(len(annotation_onehot) // 5, 5)
@@ -221,9 +228,15 @@ class SleepEDFx(SleepSet):
 
     features = []
     targets = []
-    chn_names = [self.CHANNEL[i] for i in config_string.split(',')]
+    if ',' in config_string:
+      chn_names = [self.CHANNEL[i] for i in config_string.split(',')]
+    else:
+      chn_names = [self.CHANNEL[config_string]]
+
     for sg in self.signal_groups:
       sg_data = np.stack([data_preprocess(sg[name]) for name in chn_names], axis=-1)
+      if rnn is True:
+        sg_data = data_preprocess(sg[chn_names[0]])
       sg_annotation = sg.annotations[self.STAGE_KEY].annotations
       sg_data, sg_annotation = data_reshape(sg_data, sg_annotation)
 
@@ -273,6 +286,64 @@ class SleepEDFx(SleepSet):
   # endregion: Preprocess
 
   # region: Public Methods
+
+  def partition_slp(self, rnn=False):
+    from slp_core import th
+
+    def split_and_return(data_set, over_classes=True, random=True):
+      from tframe.data.dataset import DataSet
+      train_ratio = 7
+      val_ratio = 1
+      test_ratio = 2
+
+      data_sets = data_set.split(train_ratio,val_ratio,test_ratio,
+                                 random=random,
+                                 over_classes=over_classes)
+      # Show data info
+      # cls._show_data_sets_info(data_sets)
+      return data_sets
+
+    def get_sequence_data(features:List, targets):
+      features_list = []
+      targets_list = []
+      for i, feature in enumerate(features):
+        nums = feature.shape[0] // 5
+        for j in range(nums):
+          features_list.append(feature[j * 5:(j + 1) * 5])
+          targets_list.append(targets[i][(j + 1) * 5 - 1])
+      data_set = SequenceSet(features=features_list,
+                             summ_dict={'targets': targets_list},
+                             name='SleepData')
+      assert isinstance(data_set, SequenceSet)
+      return data_set
+
+    # preprocess and reshape every single person
+    self.configure('0,1,2',rnn=rnn)
+
+    # integrate persons to one dataset
+    if rnn is True:
+      from slp_core import th
+      person_num = int(th.data_config.split(':')[1])
+      train_person = int(person_num * 0.7)
+      val_person = int(person_num * 0.1)
+      train_set_features = self.features[:train_person]
+      train_set_targets = self.targets[:train_person]
+      val_set_features = self.features[train_person:train_person+val_person]
+      val_set_targets = self.targets[train_person:train_person+val_person]
+      test_set_features = self.features[train_person + val_person:]
+      test_set_targets = self.targets[train_person + val_person:]
+      train_set = get_sequence_data(train_set_features, train_set_targets)
+      val_set = get_sequence_data(val_set_features, val_set_targets)
+      test_set = get_sequence_data(test_set_features, test_set_targets)
+      return [train_set, val_set, test_set]
+
+    features = np.vstack(self.features[:])
+    targets = np.vstack(self.targets[:])
+
+    dataset = DataSet(features=features, targets=targets)
+    dataset.properties[self.NUM_CLASSES] = 5
+    assert isinstance(dataset, DataSet)
+    return split_and_return(dataset)
 
 
   def partition_lll(self):

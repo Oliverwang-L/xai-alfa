@@ -55,7 +55,7 @@ def main(_):
   th.developer_code = 'data'
 
   # '*1,2,3', '*1,2', '*3'
-  th.data_config = '*'
+  th.data_config = '5,1,1,1,1'
   th.train_id = 0
 
   th.output_dim = 5

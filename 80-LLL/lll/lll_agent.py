@@ -163,10 +163,9 @@ class LLLAgent(object):
     data_name = 'sleep-cassette-train20'
     first_k = sum([int(i) for i in th.data_config.split(',')])
     suffix = '-alpha'
-    suffix_k = '' if first_k is None else f'({first_k})'
-    suffix_c = '-'.join(th.data_config.split(','))
+    suffix_c = '-'.join(th.data_config.split(',')) if ',' in th.data_config else ''
     tfd_preprocess_path = os.path.join(
-      data_dir, data_name, f'{data_name}{suffix_k}{suffix}-{suffix_c}-pro.tfds')
+      data_dir, data_name, f'{data_name}{suffix}({suffix_c})-pro.tfds')
     if os.path.exists(tfd_preprocess_path):
       with open(tfd_preprocess_path,'rb') as input_:
         console.show_status('Loading `{}` ...'.format(tfd_preprocess_path))

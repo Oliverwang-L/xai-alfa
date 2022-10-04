@@ -94,12 +94,14 @@ def activate():
                 test_set=test_set, trainer_hub=th)
 
   if th.task in (th.Tasks.FMNIST.value, th.Tasks.MNIST.value):
+    if model.agent._session is None: model.launch_model()
     # Load best model after training
     model.agent.load()
     # Evaluate on test sets
     model.evaluate_image_sets(
       *test_sets, show_class_detail=False, show_confusion_matrix=False)
   else:
+    if model.agent._session is None: model.launch_model()
     # Load best model after training
     model.agent.load()
     # Evaluate on test sets

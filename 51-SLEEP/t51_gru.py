@@ -3,6 +3,7 @@ from tframe import console
 from tframe.utils.misc import date_string
 from tframe.nets.rnn_cells.gru import GRU
 from tframe.utils.organizer.task_tools import update_job_dir
+from slp_core import th
 
 import slp_core as core
 import slp_mu as m
@@ -11,26 +12,33 @@ import slp_mu as m
 # -----------------------------------------------------------------------------
 # Define model here
 # -----------------------------------------------------------------------------
-model_name = 'gru'
-id = 1
-def model(th):
+model_name = 'sleep-gru'
+id = 4
+def model():
   assert isinstance(th, m.Config)
+  cells = []
+
+  cells.append(m.mu.Dense(500))
+
   cell = GRU(
     state_size=th.state_size,
     use_reset_gate=th.use_reset_gate,
   )
-  return m.typical(th, cell)
+  cells.append(cell)
+  return m.typical(cells)
 
 
 def main(_):
-  console.start('{} on Sleep task'.format(model_name.upper()))
+  console.start('{} on TO task'.format(model_name.upper()))
 
   th = core.th
   # ---------------------------------------------------------------------------
   # 0. date set setup
   # ---------------------------------------------------------------------------
-  th.sequence_length = 100
-  th.bits = 3
+  th.sequence_length = 5
+  th.input_shape = [3000]
+  th.data_config = 'sleepedf:10:rnn'
+  th.output_dim = 5
 
   # ---------------------------------------------------------------------------
   # 1. folder/file names and device
@@ -42,7 +50,7 @@ def main(_):
 
   th.visible_gpu_id = 0
   # ---------------------------------------------------------------------------
-  # 2. model setup
+  # 2. model setu
   # ---------------------------------------------------------------------------
   th.model = model
   th.state_size = 100
@@ -51,9 +59,17 @@ def main(_):
   # ---------------------------------------------------------------------------
   # 3. trainer setup
   # ---------------------------------------------------------------------------
+  # th.max_iterations = 50000
+  th.epoch = 1000
+  th.batch_size = 32
+
   th.optimizer = tf.train.AdamOptimizer
   th.learning_rate = 0.001
 
+  th.train = True
+  th.overwrite = True
+  th.print_cycle = 10
+  th.save_model = True
   # ---------------------------------------------------------------------------
   # 4. summary and note setup
   # ---------------------------------------------------------------------------
@@ -68,7 +84,7 @@ def main(_):
   # ---------------------------------------------------------------------------
   # 5. other stuff and activate
   # ---------------------------------------------------------------------------
-  tail = '_{}bits_L{}'.format(th.bits, th.sequence_length)
+  tail = '{}'.format(th.sequence_length)
   th.mark = '{}({})'.format(model_name, th.state_size) + tail
   th.gather_summ_name = th.prefix + summ_name + tail + th.suffix + '.sum'
   core.activate()
