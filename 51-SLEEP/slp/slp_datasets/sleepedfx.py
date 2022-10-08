@@ -228,6 +228,7 @@ class SleepEDFx(SleepSet):
 
     features = []
     targets = []
+
     if ',' in config_string:
       chn_names = [self.CHANNEL[i] for i in config_string.split(',')]
     else:

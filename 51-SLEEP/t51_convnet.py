@@ -78,7 +78,7 @@ def main(_):
   # ---------------------------------------------------------------------------
   # 0. date set setup
   # ---------------------------------------------------------------------------
-  th.data_config = 'sleepedf:10:cnn'
+  th.data_config = 'sleepedf:10'
   if 'apnea' in th.data_config:
     th.output_dim = 2
     th.input_shape = [120, 1]

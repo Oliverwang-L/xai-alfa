@@ -26,27 +26,24 @@ class SleepRecord(object):
     from slp.slp_datasets.sleepedfx import SleepEDFx
 
     # Find 51-SLEEP/data/sleepedfx
-    data_dir = os.path.dirname(th.data_dir)   # 51-SLEEP
-    data_dir = os.path.join(data_dir, 'data')
 
     data_name = th.data_config.split(':')[0]
     data_num = th.data_config.split(':')[1]
-    model_type = th.data_config.split(':')[2] == 'rnn'
     suffix = '-alpha'
     suffix_num = '' if data_num is None else f'({data_num})'
     tfd_preprocess_path = os.path.join(
-      data_dir, data_name, f'{data_name}{suffix_num}{suffix}-final.tfds')
+      th.data_dir, data_name, f'{data_name}{suffix_num}{suffix}-final.tfds')
     if os.path.exists(tfd_preprocess_path):
       with open(tfd_preprocess_path,'rb') as input_:
         console.show_status('Loading `{}` ...'.format(tfd_preprocess_path))
         dataset = pickle.load(input_)
     else:
-      dataset: SleepEDFx = SLPAgent.load_as_tframe_data(data_dir,
-                                                         data_name=data_name,
-                                                         first_k=data_num,
-                                                         suffix=suffix)
+      dataset: SleepEDFx = SLPAgent.load_as_tframe_data(data_dir=th.data_dir,
+                                                        data_name=data_name,
+                                                        first_k=data_num,
+                                                        suffix=suffix)
 
-      dataset = dataset.partition_slp(rnn=model_type)
+      dataset = dataset.partition_slp(rnn=th.use_rnn)
 
       with open(tfd_preprocess_path, 'wb') as output_:
         console.show_status(f'Saving {tfd_preprocess_path}...')

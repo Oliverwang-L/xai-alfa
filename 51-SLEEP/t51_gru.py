@@ -2,6 +2,7 @@ from tframe import tf
 from tframe import console
 from tframe.utils.misc import date_string
 from tframe.nets.rnn_cells.gru import GRU
+from tframe.nets.rnn_cells.lstms import LSTM
 from tframe.utils.organizer.task_tools import update_job_dir
 from slp_core import th
 
@@ -20,7 +21,7 @@ def model():
 
   cells.append(m.mu.Dense(500))
 
-  cell = GRU(
+  cell = LSTM(
     state_size=th.state_size,
     use_reset_gate=th.use_reset_gate,
   )
@@ -37,9 +38,9 @@ def main(_):
   # ---------------------------------------------------------------------------
   th.sequence_length = 5
   th.input_shape = [3000]
-  th.data_config = 'sleepedf:10:rnn'
+  th.data_config = 'sleepedf:10'
   th.output_dim = 5
-
+  th.use_rnn = True
   # ---------------------------------------------------------------------------
   # 1. folder/file names and device
   # ---------------------------------------------------------------------------
